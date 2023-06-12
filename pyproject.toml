@@ -1,0 +1,22 @@
+[build-system]
+requires = ['setuptools>=36.6.0', 'wheel']
+
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "rover_ekf"
+version = "0.0.1"
+dependencies = [
+  "click",
+  "jax[cuda12_pip]",
+  "numba",
+  "numpy",
+  "opencv-python",
+  "pyapriltags",
+  "pygame",
+  "tqdm",
+  "yoctopuce",
+]
+
+[project.scripts]
+rover_ekf = "ekf.main:cli"
