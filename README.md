@@ -80,7 +80,12 @@ Install into a python virtual environment:
 pip install -e .
 ```
 
-If you want to use GPU/TPU for autograd, you need to install jax with the cuda dependencies, see here: https://github.com/google/jax#installation
+Additionally you need to install a backend for `jax`, you can either install the cpu based one for testing:
+```bash
+pip install --upgrade "jax[cpu]"
+```
+
+Or, if you want to use GPU/TPU for autograd, you need to install jax with the cuda dependencies, see here: https://github.com/google/jax#installation
 
 ```bash
 pip install --upgrade "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
