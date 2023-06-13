@@ -2,14 +2,14 @@ from time import time
 
 from jax import numpy as jnp
 
-from ekf.state import Actor3D
+from ekf.state import RoverModel
 
 
 class Rover:
     def __init__(self, d) -> None:
-        self.actor = Actor3D(d)
+        self.actor = RoverModel(d)
         self.state = jnp.zeros((9,))
-        self.P0 = jnp.zeros((9,))
+        self.P0 = jnp.zeros((9, 9))
         self.control = jnp.array((0, 0))
         self.last_time = time()
 

@@ -3,11 +3,11 @@ import math
 from jax import numpy as jnp
 from numpy import testing
 
-from ekf.state import Actor3D
+from ekf.state import RoverModel
 
 
 def test_no_movement():
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
     state = jnp.zeros((9,))
 
     control = jnp.zeros((2,))
@@ -17,7 +17,7 @@ def test_no_movement():
 
 
 def test_movement_ahead():
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
     state = jnp.zeros((9,))
 
     control = jnp.array((100, 100))
@@ -28,7 +28,7 @@ def test_movement_ahead():
 
 
 def test_rotation_left():
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
     state = jnp.zeros((9,))
 
     control = jnp.array((50, -50))
@@ -45,7 +45,7 @@ def test_rotation_left():
 
 
 def test_rotation_right():
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
     state = jnp.zeros((9,))
 
     control = jnp.array((-50, 50))
@@ -62,7 +62,7 @@ def test_rotation_right():
 
 
 def test_rotated_drive():
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
 
     state = jnp.zeros((9,))
 

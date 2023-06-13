@@ -13,10 +13,14 @@ def normalize_angle(yaw):
     return normalized_yaw
 
 
-class Actor3D:
+class RoverModel:
     def __init__(self, d):
         self.d = d
-        self.Q = jnp.zeros((9, 9))
+        dim = 9
+        self.state_dim = dim
+        self.Q = jnp.zeros((dim, dim))
+        self.initial_state = jnp.zeros((dim,))
+        self.P0 = jnp.zeros(((dim, dim)))
 
     @partial(jit, static_argnums=0)
     def F(self, state, control, dt):

@@ -6,11 +6,11 @@ from tqdm import trange
 from ekf.filter import ExtendedKalmanFilter
 from ekf.simulation.rover import Rover
 from ekf.simulation.sensors import SimulatedGyroSensor, SimulatedTagSensor
-from ekf.state import Actor3D
+from ekf.state import RoverModel
 
 
 def measure_actor(iterations=1000):
-    actor = Actor3D(d=2)
+    actor = RoverModel(d=2)
     state = jnp.zeros((9,))
     control = jnp.zeros((2,))
 
