@@ -1,18 +1,19 @@
 import time
 from threading import Thread
-from typing import Callable
+from typing import Callable, List, Optional
 
 from ekf.measurements import Measurement
 
 
 class Sensor:
-    name = "Sensor"
-
-    def __init__(self, timeout=None) -> None:
-        self.listeners = []
+    def __init__(
+        self, timeout: Optional[float] = None, name: Optional[str] = None
+    ) -> None:
+        self.listeners: List[Callable[[Measurement, Sensor], None]] = []
         self.stopping = False
         self.timeout = timeout
         self.thread = None
+        self.name = name
 
     def start(self):
         if self.thread is None:

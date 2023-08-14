@@ -35,12 +35,20 @@ class RoverModel:
 
         def if_equal(carry):
             x, y, z, yaw, v_left, v_right, v_z, _, dt = carry
-            x_new = x + v_left * dt * jnp.cos(yaw)
-            y_new = y + v_right * dt * jnp.sin(yaw)
+
+            # Calculate average velocity adjusted for yaw and decompose it
+            v_avg = (v_left + v_right) / 2
+            v_xy = v_avg * jnp.cos(pitch)
+            v_z += v_avg * jnp.sin(pitch)  # adjust vertical velocity based on pitch
+
+            # Incorporate pitch and roll in horizontal velocities
+            x_new = x + v_xy * dt * jnp.cos(yaw) * jnp.cos(roll)
+            y_new = y + v_xy * dt * jnp.sin(yaw) * jnp.cos(roll)
             z_new = z + v_z * dt
             yaw_new = yaw
             pitch_new = pitch  # no change
             roll_new = roll  # no change
+
             return x_new, y_new, z_new, yaw_new, pitch_new, roll_new
 
         def if_not_equal(carry):
@@ -59,9 +67,21 @@ class RoverModel:
                 ]
             )
 
+            # Calculate average velocity adjusted for yaw and decompose it
+            v_avg = (v_left + v_right) / 2
+            v_xy = v_avg * jnp.cos(pitch)
+            v_z += v_avg * jnp.sin(pitch)
+
+            # Incorporate pitch and roll in the movement
+            x_movement = v_xy * jnp.cos(yaw) * jnp.cos(roll)
+            y_movement = v_xy * jnp.sin(yaw) * jnp.cos(roll)
+
             new_pos = jnp.dot(
-                rotation_matrix, jnp.array([x - ICC_x, y - ICC_y, z])
-            ) + jnp.array([ICC_x, ICC_y, v_z * dt])
+                rotation_matrix,
+                jnp.array(
+                    [x - ICC_x + x_movement * dt, y - ICC_y + y_movement * dt, z]
+                ),
+            ) + jnp.array([ICC_x, ICC_y, z + v_z * dt])
             x_new, y_new, z_new = new_pos
 
             yaw_new = normalize_angle(yaw + omega * dt)

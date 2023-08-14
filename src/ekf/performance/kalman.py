@@ -1,4 +1,5 @@
 from time import time
+from typing import Literal
 
 from jax import numpy as jnp
 from tqdm import trange
@@ -9,7 +10,7 @@ from ekf.simulation.sensors import SimulatedGyroSensor, SimulatedTagSensor
 from ekf.state import RoverModel
 
 
-def measure_actor(iterations=1000):
+def measure_actor(iterations: int = 1000):
     actor = RoverModel(d=2)
     state = jnp.zeros((9,))
     control = jnp.zeros((2,))
@@ -26,15 +27,20 @@ def measure_actor(iterations=1000):
     return time() - start
 
 
-def measure_kalman(iterations=1000, sensor="gyro"):
+SENSORS = Literal["gyro", "tag"]
+
+
+def measure_kalman(iterations: int = 1000, sensor_kind: SENSORS = "gyro"):
     rover = Rover(d=2)
 
     filter = ExtendedKalmanFilter(rover.actor.F, rover.actor.Q, rover.state, rover.P0)
     control = jnp.zeros((2,))
-    if sensor == "gyro":
+    if sensor_kind == "gyro":
         sensor = SimulatedGyroSensor(rover=rover)
-    else:
+    elif sensor_kind == "tag":
         sensor = SimulatedTagSensor(rover=rover)
+    else:
+        raise ValueError(f"Invalid sensor kind provided: {sensor_kind}")
 
     # Warmup
     for _ in range(10):
@@ -48,7 +54,10 @@ def measure_kalman(iterations=1000, sensor="gyro"):
     return time() - start
 
 
-def benchmark(method, iterations, sensor="gyro"):
+METHODS = Literal["actor", "ekf"]
+
+
+def benchmark(method: METHODS, iterations: int, sensor: SENSORS = "gyro"):
     t = -1
 
     print(f"Starting '{method}' with {iterations} its.:")

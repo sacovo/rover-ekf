@@ -1,13 +1,20 @@
 import socket
 import time
 from threading import Thread
+from typing import Sequence
 
 
-def chunker(seq, size):
+def chunker(seq: Sequence, size: int):
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
 
 
-def main(host, port):
+def to_left_and_right_speed(received):
+    left_front, left_rear, right_front, right_rear = [int(x) for x in received[:4]]
+
+    return (left_front + left_rear) / 2, (right_front + right_rear) / 2
+
+
+def main(host: str, port: int):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, port))
         while True:
@@ -26,11 +33,11 @@ class MotorControlState:
 
 
 class MotorControlStateTCP(MotorControlState):
-    def __init__(self, host="172.16.20.77", port=3002) -> None:
+    def __init__(self, host: str = "172.16.20.77", port: int = 3002) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = port
-        self.stopping = False
+        self.stopping: bool = False
 
         self.state = None
 
@@ -65,7 +72,7 @@ class MotorControlStateTCP(MotorControlState):
             for chunk in chunked:
                 received.append(int.from_bytes(chunk, "big", signed=True))
 
-            self.state = received
+            self.state = to_left_and_right_speed(received)
 
     def get_current_state(self):
         return self.state

@@ -51,8 +51,8 @@ def quaternion_to_euler(w, x, y, z):
 
 
 class Yocto3DSensor(Sensor):
-    def __init__(self, timeout=None, target="any") -> None:
-        super().__init__(timeout)
+    def __init__(self, timeout=None, target="any", **kwargs) -> None:
+        super().__init__(timeout, **kwargs)
 
         errmsg = YRefParam()
         YAPI.RegisterHub("127.0.0.1", errmsg)

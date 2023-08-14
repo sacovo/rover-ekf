@@ -1,107 +1,42 @@
 from functools import partial
 from urllib import request
 
+import cv2
+import numpy as np
+from erctag import TagDetector
 from jax import jit
 from jax import numpy as jnp
 from jax import vmap
-from pyapriltags import Detector
 
 from ekf.measurements import TagMeasurement
+from ekf.sensors.camera import CameraConfig
+from ekf.tag_calculations import ypr_to_rotation_matrix
 
 from .sensor import Sensor
 
 
-class CameraConfig:
-    def __init__(
-        self,
-    ) -> None:
-        self.position = jnp.array([0, 0, 0])
-        self.orientation = jnp.array([0, 0, 0])
-
-
-def ypr_to_rotation_matrix(angles):
-    yaw, pitch, roll = angles  # convert degrees to radian
-
-    # rotation matrix for yaw
-    R_yaw = jnp.array(
-        [
-            [jnp.cos(yaw), -jnp.sin(yaw), 0],
-            [jnp.sin(yaw), jnp.cos(yaw), 0],
-            [0, 0, 1],
-        ]
-    )
-
-    # rotation matrix for pitch
-    R_pitch = jnp.array(
-        [
-            [jnp.cos(pitch), 0, jnp.sin(pitch)],
-            [0, 1, 0],
-            [-jnp.sin(pitch), 0, jnp.cos(pitch)],
-        ]
-    )
-
-    # rotation matrix for roll
-    R_roll = jnp.array(
-        [
-            [1, 0, 0],
-            [0, jnp.cos(roll), -jnp.sin(roll)],
-            [0, jnp.sin(roll), jnp.cos(roll)],
-        ]
-    )
-
-    # Combined rotation matrix is R = R_yaw * R_pitch * R_roll
-    R = jnp.dot(R_yaw, jnp.dot(R_pitch, R_roll))
-
-    return R
-
-
-def euler_to_rotation_matrix(theta):
-    R_x = jnp.array(
-        [
-            [1.0, 0.0, 0.0],
-            [0.0, jnp.cos(theta[0]), -jnp.sin(theta[0])],
-            [0.0, jnp.sin(theta[0]), jnp.cos(theta[0])],
-        ]
-    )
-
-    R_y = jnp.array(
-        [
-            [jnp.cos(theta[1]), 0, jnp.sin(theta[1])],
-            [0, 1, 0],
-            [-jnp.sin(theta[1]), 0, jnp.cos(theta[1])],
-        ]
-    )
-
-    R_z = jnp.array(
-        [
-            [jnp.cos(theta[2]), -jnp.sin(theta[2]), 0],
-            [jnp.sin(theta[2]), jnp.cos(theta[2]), 0],
-            [0, 0, 1],
-        ]
-    )
-
-    R = jnp.dot(R_z, jnp.dot(R_y, R_x))
-
-    return R
-
-
 class TagSensor(Sensor):
+    name = "tags"
+
     def __init__(
-        self, url, camera_parameters, tag_size, tag_positions, **kwargs
+        self, camera_config: CameraConfig, tag_size, tag_positions, **kwargs
     ) -> None:
-        super().__init__(kwargs.pop("timeout", None))
-        self.url = url
-        self.camera_parameters = camera_parameters
-        self.detector = Detector(**kwargs)
+        super().__init__(
+            timeout=kwargs.pop("timeout", None), name=kwargs.pop("name", self.name)
+        )
+        self.url = camera_config.url
+        self.camera = camera_config
+
+        self.detector = TagDetector(
+            calibration=camera_config.calibration,
+            distortion=camera_config.distortion,
+        )
         self.tag_size = tag_size
-        self.total_tags = 10
         self.tag_positions = tag_positions
+        self.total_tags = len(tag_positions)
 
     def get_tag_positions(self, image, total_tags=10):
-        result = self.detector.detect(
-            image, True, self.camera_parameters, self.tag_size
-        )
-
+        result = self.detector.detect_tags(image)
         # Prepare output arrays
         positions = jnp.zeros((total_tags, 3))
         uncertainties = jnp.full((total_tags, 3), jnp.inf)
@@ -111,11 +46,20 @@ class TagSensor(Sensor):
             if tag.tag_id >= total_tags:
                 continue  # Ignore tags with IDs outside our expected range
 
-            positions[tag.tag_id] = tag.pose_t
+            positions[tag.tag_id] = tag.t
 
             uncertainties[tag.tag_id] = 1.0
 
         return positions, uncertainties
+
+    def next_frame(self):
+        response = request.urlopen(self.url)
+        img_array = jnp.asarray(bytearray(response.read()), dtype=jnp.uint8)
+
+        img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
+        img = cv2.imdecode(img_array, -1)
+
+        return img
 
     @staticmethod
     def calculate_tag_position(tag_position, camera_position, camera_orientation):
@@ -126,16 +70,19 @@ class TagSensor(Sensor):
         )
         return tag_position_camera_frame
 
-    def measure(self):
-        response = request.urlopen(self.url)
-        img_array = jnp.asarray(bytearray(response.read()), dtype=jnp.uint8)
-
-        positions, uncertainties = self.get_tag_positions(img_array)
+    def get_reading(self, img):
+        positions, uncertainties = self.get_tag_positions(img)
 
         return TagMeasurement(
             data=positions.flatten(),
             R=uncertainties,
         )
+
+    def measure(self):
+        img = self.next_frame()
+
+        # R: für alle gleich
+        return self.get_reading(img)
 
     @partial(jit, static_argnums=0)
     def H(self, state):
@@ -144,8 +91,8 @@ class TagSensor(Sensor):
         rover_orientation = jnp.array([theta, pitch, roll])
 
         # Compute camera position and orientation in global frame
-        camera_position = rover_position + self.camera_parameters.position
-        camera_orientation = rover_orientation + self.camera_parameters.orientation
+        camera_position = rover_position + self.camera.position
+        camera_orientation = rover_orientation + self.camera.orientation
 
         # Vector from camera to each tag in camera frame
 
@@ -156,4 +103,5 @@ class TagSensor(Sensor):
                 camera_orientation=camera_orientation,
             )
         )(self.tag_positions)
+
         return tag_vectors_camera_frame.flatten()
