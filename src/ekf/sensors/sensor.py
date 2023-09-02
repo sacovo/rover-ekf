@@ -34,7 +34,9 @@ class Sensor:
     def _run(self):
         while not self.stopping:
             value = self.measure()
-            self._call_callbacks(value)
+
+            if value is not None:
+                self._call_callbacks(value)
 
             if self.timeout:
                 time.sleep(self.timeout)

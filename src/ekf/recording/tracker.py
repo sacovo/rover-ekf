@@ -12,6 +12,8 @@ class EKFTracker:
 
     def step(self):
         timestamp, reading, motor, sensor = self.loader.next_reading()
+        if reading is None:
+            return
         dt = timestamp - self.last_timestamp
         self.last_timestamp = timestamp
         self.current_step = (reading, motor, sensor)

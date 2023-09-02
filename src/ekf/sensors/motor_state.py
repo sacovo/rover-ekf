@@ -31,6 +31,12 @@ class MotorControlState:
     def get_current_state(self):
         pass
 
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
 
 class MotorControlStateTCP(MotorControlState):
     def __init__(self, host: str = "172.16.20.77", port: int = 3002) -> None:

@@ -19,7 +19,7 @@ class CameraConfig:
 
         distortion = kwargs.pop("distortion", None)
         if distortion is not None:
-            self.distortion = jnp.array(distortion)
+            self.distortion = jnp.array(*distortion)
         else:
             self.distortion = None
 

@@ -39,6 +39,7 @@ class EKFTracker:
 
     def start(self):
         self._setup_listeners()
+        self.motor_control.start()
         self.thread = Thread(target=self._filter_loop, daemon=True)
         self.thread.start()
 

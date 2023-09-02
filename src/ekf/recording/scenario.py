@@ -92,6 +92,7 @@ class CameraLoader:
         img = cv2.imread(os.path.join(self.path, img_path))
         reading = self.sensor.get_reading(img)
 
+        print(self.path, img_path)
         self.value = reading
         # img_000727_1691417746026.jpg
         self.timestamp = int(img_path.split("_")[-1].split(".")[0]) / 1000
@@ -124,9 +125,6 @@ class SensorLoader:
                 loader = camera
 
         value = loader.value
-
-        if value is None:
-            raise ValueError()
 
         timestamp = loader.timestamp
         motor = self.motor_loader.value

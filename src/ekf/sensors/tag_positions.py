@@ -50,15 +50,19 @@ class TagSensor(Sensor):
         for tag in result:
             if tag.distance > 7:
                 continue
+
+            if tag.tag_id >= total_tags:
+                continue
+
             corners = np.array(tag.corners)
             center = corners.mean(axis=0)
             tag_centers[tag.tag_id].append(center)
 
+        if len(tag_centers) == 0:
+            return None, None
+        print(tag_centers)
         # Extract tag information
         for tag_id, centers in tag_centers.items():
-            if tag_id >= total_tags:
-                continue  # Ignore tags with IDs outside our expected range
-
             positions[tag_id] = np.mean(centers, axis=0)
 
             uncertainties[tag_id] = 0.1
@@ -89,6 +93,8 @@ class TagSensor(Sensor):
 
     def get_reading(self, img):
         positions, uncertainties = self.get_tag_positions(img, self.total_tags)
+        if positions is None or uncertainties is None:
+            return None
 
         return TagMeasurement(
             data=positions.flatten(),
