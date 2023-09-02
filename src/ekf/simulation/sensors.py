@@ -7,7 +7,7 @@ from jax import random
 
 from ekf.measurements import OrientationMeasurement, TagMeasurement
 from ekf.sensors import Sensor
-from ekf.sensors.tag_positions import CameraConfig, TagSensor
+from ekf.sensors.tag_positions import TagSensor
 from ekf.simulation.rover import Rover
 
 TAG_POSITIONS = jnp.array(
@@ -28,17 +28,14 @@ TAG_POSITIONS = jnp.array(
 class SimulatedTagSensor(TagSensor):
     def __init__(
         self,
-        camera_parameters=None,
+        camera_config,
         tag_size=1,
         tag_positions=TAG_POSITIONS,
         rover: Optional[Rover] = None,
         **kwargs,
     ):
         super().__init__(
-            None,
-            camera_parameters=camera_parameters
-            if camera_parameters
-            else CameraConfig(),
+            camera_config,
             tag_size=tag_size,
             tag_positions=tag_positions,
             name=kwargs.pop("name", "tags"),
@@ -52,7 +49,6 @@ class SimulatedTagSensor(TagSensor):
         self.key, subkey = random.split(self.key)
         data = (random.uniform(subkey, shape=(len(data),)) - 0.5) * 10.0
         return TagMeasurement(data, jnp.eye(len(self.tag_positions) * 3) * 0.001)
-        return TagMeasurement(data, jnp.eye(len(self.tag_positions) * 3) * 0.001)
 
 
 class SimulatedGyroSensor(Sensor):
@@ -62,13 +58,15 @@ class SimulatedGyroSensor(Sensor):
         self.key = random.PRNGKey(758493)  # Random seed is explicit in JAX
 
     def measure(self):
-        yaw, pitch, roll = self.rover.state[-3:]
         self.key, subkey = random.split(self.key)
         # Return estimated yaw, pitch, roll from state
         #
-        data = (random.uniform(subkey, shape=(3,)) - 0.5) * 10.0
+        data = (
+            self.H(self.rover.state)
+            + (random.uniform(subkey, shape=(3,)) - 0.5) * 0.001
+        )
 
-        return OrientationMeasurement(data, jnp.eye(3) * 0.01)
+        return OrientationMeasurement(data, jnp.eye(3) * 0.000001)
 
     @partial(jit, static_argnums=0)
     def H(self, x):

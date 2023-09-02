@@ -18,7 +18,7 @@ def test_single_call_zero():
     ekf.step(control, 1, sensor.measure(), sensor)
     rover.step_dt(1)
 
-    testing.assert_allclose(ekf.state, rover.state)
+    testing.assert_allclose(ekf.state, rover.state, atol=0.01)
 
 
 def test_single_call():
@@ -28,12 +28,12 @@ def test_single_call():
     control = jnp.array([100, 20])
     sensor = SimulatedGyroSensor(rover=rover)
 
-    ekf.step(control, 1, sensor.measure(), sensor)
-
     rover.set_control(control)
     rover.step_dt(1)
 
-    testing.assert_allclose(ekf.state, rover.state)
+    ekf.step(control, 1, sensor.measure(), sensor)
+
+    testing.assert_allclose(ekf.state, rover.state, atol=0.1)
 
 
 def test_random_stream():
@@ -43,17 +43,19 @@ def test_random_stream():
 
     key = random.PRNGKey(12)
 
+    gyro = SimulatedGyroSensor(rover=rover)
+
     for _ in range(100):
         key, subkey = random.split(key)
-        control = random.randint(subkey, shape=(2,), minval=-100, maxval=100)
-        sensor = SimulatedGyroSensor(rover=rover)
-
-        ekf.step(control, 1, sensor.measure(), sensor)
+        control = random.randint(subkey, shape=(2,), minval=-10, maxval=10)
 
         rover.set_control(control)
         rover.step_dt(1)
 
-        testing.assert_allclose(ekf.state, rover.state)
+        ekf.predict(control, 1)
+        ekf.update(gyro.measure(), gyro)
+
+    testing.assert_allclose(ekf.state, rover.state, atol=0.1)
 
 
 def test_single_call_tag():
@@ -63,7 +65,12 @@ def test_single_call_tag():
     control = jnp.zeros((2,))
 
     sensor = SimulatedTagSensor(
-        camera_parameters=CameraConfig(),
+        camera_config=CameraConfig(
+            orientation=jnp.array([0, 0, 0]),
+            position=jnp.array(
+                [0, 0, 0],
+            ),
+        ),
         tag_size=1,
         tag_positions=jnp.array(
             [

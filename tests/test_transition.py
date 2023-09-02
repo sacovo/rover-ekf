@@ -27,6 +27,18 @@ def test_movement_ahead():
     testing.assert_allclose(state1[:3], jnp.array([100, 0, 0]))
 
 
+def test_movement_loop():
+    actor = RoverModel(d=2)
+    state = jnp.zeros((9,))
+
+    control = jnp.array((100, 100))
+
+    for i in range(1000):
+        state = actor.F(state, control, 0.001)
+
+    testing.assert_allclose(state[:3], jnp.array([100, 0, 0]), atol=0.1)
+
+
 def test_rotation_left():
     actor = RoverModel(d=2)
     state = jnp.zeros((9,))

@@ -9,9 +9,9 @@ def chunker(seq: Sequence, size: int):
 
 
 def to_left_and_right_speed(received):
-    left_front, left_rear, right_front, right_rear = [int(x) for x in received[:4]]
+    left_front, left_rear, right_front, right_rear = [int(x) for x in received[1:5]]
 
-    return (left_front + left_rear) / 2, (right_front + right_rear) / 2
+    return (left_front + left_rear) / 2 / 1000, (right_front + right_rear) / 2 / 1000
 
 
 def main(host: str, port: int):

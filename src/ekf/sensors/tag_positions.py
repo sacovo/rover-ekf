@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import partial
 from urllib import request
 
@@ -7,10 +8,15 @@ from erctag import TagDetector
 from jax import jit
 from jax import numpy as jnp
 from jax import vmap
+from jax.scipy.spatial.transform import Rotation
 
 from ekf.measurements import TagMeasurement
 from ekf.sensors.camera import CameraConfig
-from ekf.tag_calculations import ypr_to_rotation_matrix
+from ekf.tag_calculations import (
+    apply_distortion,
+    project_to_image,
+    tag_to_camera_coordinates,
+)
 
 from .sensor import Sensor
 
@@ -28,8 +34,7 @@ class TagSensor(Sensor):
         self.camera = camera_config
 
         self.detector = TagDetector(
-            calibration=camera_config.calibration,
-            distortion=camera_config.distortion,
+            n_jobs=1,
         )
         self.tag_size = tag_size
         self.tag_positions = tag_positions
@@ -38,44 +43,56 @@ class TagSensor(Sensor):
     def get_tag_positions(self, image, total_tags=10):
         result = self.detector.detect_tags(image)
         # Prepare output arrays
-        positions = jnp.zeros((total_tags, 3))
-        uncertainties = jnp.full((total_tags, 3), jnp.inf)
+        positions = np.zeros((total_tags, 2))
+        uncertainties = np.full((total_tags, 2), 1.0)
+
+        tag_centers = defaultdict(list)
+        for tag in result:
+            if tag.distance > 7:
+                continue
+            corners = np.array(tag.corners)
+            center = corners.mean(axis=0)
+            tag_centers[tag.tag_id].append(center)
 
         # Extract tag information
-        for tag in result:
-            if tag.tag_id >= total_tags:
+        for tag_id, centers in tag_centers.items():
+            if tag_id >= total_tags:
                 continue  # Ignore tags with IDs outside our expected range
 
-            positions[tag.tag_id] = tag.t
+            positions[tag_id] = np.mean(centers, axis=0)
 
-            uncertainties[tag.tag_id] = 1.0
+            uncertainties[tag_id] = 0.1
 
         return positions, uncertainties
 
     def next_frame(self):
         response = request.urlopen(self.url)
-        img_array = jnp.asarray(bytearray(response.read()), dtype=jnp.uint8)
-
         img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
         img = cv2.imdecode(img_array, -1)
 
         return img
 
     @staticmethod
-    def calculate_tag_position(tag_position, camera_position, camera_orientation):
+    def calculate_tag_position(
+        tag_position, camera_position, camera_orientation, calibration, distortion
+    ):
         # Calculate the position of the tag in the camera frame
-        tag_position_camera_frame = jnp.dot(
-            ypr_to_rotation_matrix(camera_orientation),
-            (tag_position - camera_position),
+        tag_in_camera_coordinates = tag_to_camera_coordinates(
+            tag_position, camera_position, camera_orientation
         )
-        return tag_position_camera_frame
+        projected_position = project_to_image(tag_in_camera_coordinates, calibration)
+        distorted_position = apply_distortion(
+            projected_position, calibration, distortion
+        )
+
+        return distorted_position
 
     def get_reading(self, img):
-        positions, uncertainties = self.get_tag_positions(img)
+        positions, uncertainties = self.get_tag_positions(img, self.total_tags)
 
         return TagMeasurement(
             data=positions.flatten(),
-            R=uncertainties,
+            R=uncertainties.flatten(),
         )
 
     def measure(self):
@@ -88,11 +105,11 @@ class TagSensor(Sensor):
     def H(self, state):
         x, y, z, _, _, _, theta, pitch, roll = state
         rover_position = jnp.array([x, y, z])
-        rover_orientation = jnp.array([theta, pitch, roll])
+        rover_orientation = Rotation.from_euler("ZYX", jnp.array([theta, pitch, roll]))
 
         # Compute camera position and orientation in global frame
         camera_position = rover_position + self.camera.position
-        camera_orientation = rover_orientation + self.camera.orientation
+        camera_orientation = rover_orientation * self.camera.orientation
 
         # Vector from camera to each tag in camera frame
 
@@ -101,6 +118,8 @@ class TagSensor(Sensor):
                 self.calculate_tag_position,
                 camera_position=camera_position,
                 camera_orientation=camera_orientation,
+                calibration=self.camera.calibration,
+                distortion=self.camera.distortion,
             )
         )(self.tag_positions)
 

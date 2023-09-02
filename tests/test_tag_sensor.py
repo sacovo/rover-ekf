@@ -5,8 +5,9 @@ from jax import vmap
 from numpy import testing
 from numpy.lib import math
 
-from ekf.sensors.tag_positions import CameraConfig, TagSensor, euler_to_rotation_matrix
+from ekf.sensors.tag_positions import CameraConfig, TagSensor
 from ekf.simulation.rover import Rover
+from ekf.tag_calculations import euler_to_rotation_matrix
 
 
 def test_euler_to_rotation():
