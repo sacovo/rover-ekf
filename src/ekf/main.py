@@ -30,13 +30,6 @@ def cmd_benchmark(method, iterations, sensor):
     benchmark(method, iterations, sensor)
 
 
-@cli.command("simulation")
-def cmd_simulation():
-    from ekf.simulation import simulation
-
-    simulation()
-
-
 @cli.command("motor")
 @click.option("--host", default="172.16.10.77")
 @click.option("--port", default=3002)
