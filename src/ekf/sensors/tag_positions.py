@@ -44,7 +44,7 @@ class TagSensor(Sensor):
         result = self.detector.detect_tags(image)
         # Prepare output arrays
         positions = np.zeros((total_tags, 2))
-        uncertainties = np.full((total_tags, 2), 1.0)
+        uncertainties = np.full((total_tags, 2), 0.9)
 
         tag_centers = defaultdict(list)
         for tag in result:
@@ -60,12 +60,12 @@ class TagSensor(Sensor):
 
         if len(tag_centers) == 0:
             return None, None
-        print(tag_centers)
+
         # Extract tag information
         for tag_id, centers in tag_centers.items():
             positions[tag_id] = np.mean(centers, axis=0)
 
-            uncertainties[tag_id] = 0.1
+            uncertainties[tag_id] = 0.6
 
         return positions, uncertainties
 
@@ -98,7 +98,7 @@ class TagSensor(Sensor):
 
         return TagMeasurement(
             data=positions.flatten(),
-            R=uncertainties.flatten(),
+            R=jnp.diagflat(uncertainties.flatten()),
         )
 
     def measure(self):
@@ -111,7 +111,7 @@ class TagSensor(Sensor):
     def H(self, state):
         x, y, z, _, _, _, theta, pitch, roll = state
         rover_position = jnp.array([x, y, z])
-        rover_orientation = Rotation.from_euler("ZYX", jnp.array([theta, pitch, roll]))
+        rover_orientation = Rotation.from_euler("zyx", jnp.array([theta, pitch, roll]))
 
         # Compute camera position and orientation in global frame
         camera_position = rover_position + self.camera.position

@@ -24,7 +24,7 @@ class Rover:
                     [0, 0, 0, 0, 0, 0, 0, 0, 1],
                 ]
             )
-            * 0.001
+            * 0.01
         )
         self.control = jnp.array((0, 0))
         self.last_time = time()

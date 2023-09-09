@@ -1,6 +1,5 @@
 import jax.numpy as jnp
 from jax import jacfwd
-from scipy.linalg import inv
 
 from ekf.measurements import Measurement
 from ekf.sensors import Sensor
@@ -34,11 +33,20 @@ class ExtendedKalmanFilter:
 
         # Calculate Kalman gain
         S = H_jacobian @ self.covariance @ H_jacobian.T + measurement.R
-        K = self.covariance @ H_jacobian.T @ inv(S)
+        self.S = S
+        self.H = H_jacobian
 
+        jnp.eye(S.shape[0])
+        inv = jnp.linalg.inv(S)
+        assert not jnp.isnan(inv).any()
+
+        K = self.covariance @ H_jacobian.T @ inv
+
+        self.K = K
+        self.y = y
         # Update the state estimate
-        self.state = self.state + K @ y
 
+        self.state = self.state + K @ y
         # Update the covariance estimate
         self.covariance = (self.I - K @ H_jacobian) @ self.covariance
 

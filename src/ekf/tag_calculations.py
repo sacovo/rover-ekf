@@ -80,7 +80,7 @@ def tag_to_camera_coordinates(tag_position, camera_position, camera_orientation)
     permutation_matrix = jnp.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
     tag_in_camera_coordinates_uvw = jnp.dot(
         permutation_matrix, tag_in_camera_coordinates_xyz
-    ).flatten()
+    ).flatten() * jnp.array([1, -1, 1])
 
     return tag_in_camera_coordinates_uvw.reshape(-1, 1)
 

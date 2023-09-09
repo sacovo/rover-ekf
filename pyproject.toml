@@ -8,7 +8,6 @@ name = "rover_ekf"
 version = "0.0.2"
 dependencies = [
   "click",
-  "jax[cuda12_pip]",
   "numba",
   "numpy",
   "opencv-python",

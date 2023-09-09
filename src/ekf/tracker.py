@@ -17,6 +17,7 @@ class EKFTracker:
     ) -> None:
         self.sensors = sensors
         self.filter = filter
+        self.initial_covariance = filter.covariance.copy()
         self.motor_control = motor_control
         self.last = time.time()
         self.queue = queue.Queue()
@@ -24,6 +25,7 @@ class EKFTracker:
         self.stopping = False
         self.callbacks = []
         self._listeners_setup = False
+        self.set_state = None
 
     def _setup_listeners(self):
         if not self._listeners_setup:
@@ -39,7 +41,6 @@ class EKFTracker:
 
     def start(self):
         self._setup_listeners()
-        self.motor_control.start()
         self.thread = Thread(target=self._filter_loop, daemon=True)
         self.thread.start()
 
@@ -61,9 +62,17 @@ class EKFTracker:
 
     def _filter_loop(self):
         while not self.stopping:
-            control, dt, measurement, sensor = self.queue.get()
-            self.filter.step(control, dt, measurement, sensor)
-            self.call_callbacks(self.filter.state)
+            if self.set_state is not None:
+                self.filter.state = self.set_state
+                self.filter.covariance = self.initial_covariance
+                self.set_state = None
+
+            try:
+                control, dt, measurement, sensor = self.queue.get(timeout=0.1)
+                self.filter.step(control, dt, measurement, sensor)
+                self.call_callbacks(self.filter.state)
+            except queue.Empty:
+                continue
 
     def get_state(self):
         return self.filter.state
