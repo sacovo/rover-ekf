@@ -114,9 +114,9 @@ class RotationSensor(Sensor):
 
 
 class Yocto3DSensor(RotationSensor):
-    def __init__(self, target="any", **kwargs) -> None:
+    def __init__(self, target="any", host="127.0.0.1", **kwargs) -> None:
         errmsg = YRefParam()
-        YAPI.RegisterHub("127.0.0.1", errmsg)
+        YAPI.RegisterHub(host, errmsg)
 
         if target == "any":
             # retreive any tilt sensor
