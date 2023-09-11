@@ -45,7 +45,7 @@ class MotorControlStateTCP(MotorControlState):
         self.port = port
         self.stopping: bool = False
 
-        self.state = None
+        self.state = (0, 0)
 
     def connect(self):
         self.socket.connect((self.host, self.port))
