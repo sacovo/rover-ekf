@@ -25,3 +25,8 @@ class CameraConfig:
 
         self.position = jnp.array(kwargs.pop("position"))
         self.orientation: Rotation = kwargs.pop("orientation")
+
+        if isinstance(self.orientation, list):
+            self.orientation = Rotation.from_euler(
+                "zyx", self.orientation, degrees=True
+            )
