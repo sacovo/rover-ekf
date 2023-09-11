@@ -63,7 +63,9 @@ class TagSensor(Sensor):
 
         # Extract tag information
         for tag_id, centers in tag_centers.items():
-            positions[tag_id] = np.mean(centers, axis=0)
+            # Take the one further down to avoid getting the
+            # tags on top of the pole
+            positions[tag_id] = np.max(centers, axis=0)
 
             uncertainties[tag_id] = 0.6
 
