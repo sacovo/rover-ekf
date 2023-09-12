@@ -22,6 +22,7 @@ class Camera:
 class RecordingScenario:
     gyro_path: str
     gyro_orientation: Rotation
+    gyro_initial: Rotation
     motor_path: str
     cameras: List[Camera]
     tag_positions: List[Tuple[float, float]]
@@ -29,12 +30,16 @@ class RecordingScenario:
 
 
 class GyroLoader(RotationSensor):
-    def __init__(self, path, sensor_orientation, **kwargs) -> None:
+    def __init__(self, path, sensor_orientation, initial_orientation, **kwargs) -> None:
         self.fp = open(path, "r")
         # Skip header
         self.fp.readline()
 
-        super().__init__(sensor_orientation=sensor_orientation, **kwargs)
+        super().__init__(
+            sensor_orientation=sensor_orientation,
+            initial_orientation=initial_orientation,
+            **kwargs
+        )
         self.sensor = self
         self.step()
 
@@ -92,7 +97,6 @@ class CameraLoader:
         img = cv2.imread(os.path.join(self.path, img_path))
         reading = self.sensor.get_reading(img)
 
-        print(self.path, img_path)
         self.value = reading
         # img_000727_1691417746026.jpg
         self.timestamp = int(img_path.split("_")[-1].split(".")[0]) / 1000
@@ -103,7 +107,9 @@ class CameraLoader:
 class SensorLoader:
     def __init__(self, scenario: RecordingScenario) -> None:
         self.scenario = scenario
-        self.gyro_loader = GyroLoader(scenario.gyro_path, scenario.gyro_orientation)
+        self.gyro_loader = GyroLoader(
+            scenario.gyro_path, scenario.gyro_orientation, scenario.gyro_initial
+        )
         self.motor_loader = MotorLoader(scenario.motor_path)
         self.cameras: List[CameraLoader] = []
 

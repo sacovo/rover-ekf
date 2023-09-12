@@ -79,24 +79,33 @@ def quaternion_to_euler(w, x, y, z):
 
 class RotationSensor(Sensor):
     def __init__(
-        self, sensor_orientation: Rotation = Rotation.identity(), **kwargs
+        self,
+        sensor_orientation: Rotation = Rotation.identity(),
+        initial_orientation: Rotation = Rotation.identity(),
+        **kwargs
     ) -> None:
         self.rot_sensor_inv = sensor_orientation.inv()
+        self.initial_orientation = initial_orientation
 
-        initial_measurement = self._next_rotation()
+        initial_measurement = self._next_orientation()
         self.rot_initial_inv = (initial_measurement * self.rot_sensor_inv).inv()
         super().__init__(**kwargs)
-        self.confidence = 0.000001
+        self.confidence = 0.0000001
 
     def measure(self) -> Measurement:
-        measurement = self._next_rotation()
+        measurement = self._next_orientation()
 
-        target = self.rot_initial_inv * measurement * self.rot_sensor_inv
+        target = (
+            self.initial_orientation
+            * self.rot_initial_inv
+            * measurement
+            * self.rot_sensor_inv
+        )
         euler = target.as_euler("ZYX")
 
         return OrientationMeasurement(jnp.array(euler), jnp.eye(3) * self.confidence)
 
-    def _next_rotation(self):
+    def _next_orientation(self):
         return Rotation.from_quat(self._get_quaternion())
 
     def _get_quaternion(self):

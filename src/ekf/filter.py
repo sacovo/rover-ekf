@@ -22,6 +22,7 @@ class ExtendedKalmanFilter:
         # Calculate Jacobian of F at the current state
         F_jacobian = jacfwd(self.F, argnums=0)(self.state, control, dt)
 
+        self.F_jacobian = F_jacobian
         # Propagate covariance forward
         self.covariance = F_jacobian @ self.covariance @ F_jacobian.T + self.Q
 

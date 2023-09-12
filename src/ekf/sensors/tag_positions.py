@@ -44,9 +44,11 @@ class TagSensor(Sensor):
         result = self.detector.detect_tags(image)
         # Prepare output arrays
         positions = np.zeros((total_tags, 2))
-        uncertainties = np.full((total_tags, 2), 0.9)
+        uncertainties = np.full((total_tags, 2), 2.0)
 
         tag_centers = defaultdict(list)
+        tag_distances = defaultdict(lambda: 1000.0)
+
         for tag in result:
             if tag.distance > 7:
                 continue
@@ -57,6 +59,7 @@ class TagSensor(Sensor):
             corners = np.array(tag.corners)
             center = corners.mean(axis=0)
             tag_centers[tag.tag_id].append(center)
+            tag_distances[tag.tag_id] = tag.distance
 
         if len(tag_centers) == 0:
             return None, None
@@ -67,7 +70,7 @@ class TagSensor(Sensor):
             # tags on top of the pole
             positions[tag_id] = np.max(centers, axis=0)
 
-            uncertainties[tag_id] = 0.6
+            uncertainties[tag_id] = tag_distances[tag_id] / 10 + 0.1
 
         return positions, uncertainties
 
@@ -111,7 +114,7 @@ class TagSensor(Sensor):
 
     @partial(jit, static_argnums=0)
     def H(self, state):
-        x, y, z, _, _, _, theta, pitch, roll = state
+        x, y, z, theta, pitch, roll = state
         rover_position = jnp.array([x, y, z])
         rover_orientation = Rotation.from_euler("zyx", jnp.array([theta, pitch, roll]))
 
