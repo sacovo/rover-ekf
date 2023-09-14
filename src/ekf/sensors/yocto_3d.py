@@ -15,34 +15,25 @@ from ekf.sensors import Sensor
 class RotationSensor(Sensor):
     def __init__(
         self,
-        sensor_orientation: Rotation = Rotation.identity(),
         initial_orientation: Rotation = Rotation.identity(),
         confidence=0.000001,
+        angles="ZYX",
         **kwargs
     ) -> None:
-        self.rot_sensor_inv = sensor_orientation.inv()
         self.initial_orientation = initial_orientation
 
         initial_measurement = self._next_orientation()
-        self.rot_initial_inv = (initial_measurement * self.rot_sensor_inv).inv()
+        self.rot_initial_inv = (initial_measurement).inv()
         super().__init__(**kwargs)
         self.confidence = confidence
+        self.angles = angles
 
     def measure(self) -> Measurement:
         measurement = self._next_orientation()
 
-        target = (
-            self.initial_orientation
-            * self.rot_initial_inv
-            * measurement
-            * self.rot_sensor_inv
-        )
-        z, y, x = target.as_euler("ZYX")
-        # Yocto to Rover:
-        # X -> Y
-        # Y -> Z
-        # Z -> X
-        euler = [y, x, z]
+        target = self.initial_orientation * self.rot_initial_inv * measurement
+        z, y, x = target.as_euler(self.angles)
+        euler = [z, y, x]
 
         if DEBUG:
             print("Gyro [QUAT]", target.as_quat())

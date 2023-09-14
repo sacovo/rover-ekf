@@ -1,7 +1,7 @@
 from functools import partial
 
 import jax.numpy as jnp
-from jax import jit, lax
+from jax import jit
 
 
 @jit
@@ -36,77 +36,26 @@ class RoverModel:
 
     @partial(jit, static_argnums=0)
     def F(self, state, control, dt):
-        d = self.d
-
         x, y, z, yaw, pitch, roll = state
         v_left, v_right = control
 
-        def if_equal(carry):
-            x, y, z, yaw, v_left, v_right, _, _, dt = carry
+        # Calculate average velocity adjusted for yaw and decompose it
+        v_avg = (v_left + v_right) / 2
+        v_xy = v_avg * jnp.cos(pitch)
+        v_z = v_avg * jnp.sin(pitch)  # adjust vertical velocity based on pitch
 
-            # Calculate average velocity adjusted for yaw and decompose it
-            v_avg = (v_left + v_right) / 2
-            v_xy = v_avg * jnp.cos(pitch)
-            v_z = v_avg * jnp.sin(pitch)  # adjust vertical velocity based on pitch
-
-            # Incorporate pitch and roll in horizontal velocities
-            x_new = x + v_xy * dt * jnp.sin(yaw) * jnp.cos(roll)
-            y_new = y + v_xy * dt * jnp.cos(yaw) * jnp.cos(roll)
-            z_new = z + v_z * dt
-            yaw_new = yaw
-
-            return x_new, y_new, z_new, yaw_new, pitch, roll
-
-        def if_not_equal(carry):
-            x, y, z, yaw, v_left, v_right, _, d, dt = carry
-            R = d / 2 * (v_left + v_right) / (v_right - v_left)
-            omega = (v_right - v_left) / d
-
-            ICC_x = x - R * jnp.cos(yaw)
-            ICC_y = y + R * jnp.sin(yaw)
-
-            rotation_matrix = jnp.array(
-                [
-                    [jnp.cos(omega * dt), -jnp.sin(omega * dt), 0],
-                    [jnp.sin(omega * dt), jnp.cos(omega * dt), 0],
-                    [0, 0, 1],
-                ]
-            )
-
-            # Calculate average velocity adjusted for yaw and decompose it
-            v_avg = (v_left + v_right) / 2
-            v_xy = v_avg * jnp.cos(pitch)
-            v_z = v_avg * jnp.sin(pitch)
-
-            # Incorporate pitch and roll in the movement
-            x_movement = v_xy * jnp.sin(yaw)  # * jnp.cos(roll)
-            y_movement = v_xy * jnp.cos(yaw)  # * jnp.cos(roll)
-
-            new_pos = jnp.dot(
-                rotation_matrix,
-                jnp.array(
-                    [x - ICC_x + x_movement * dt, y - ICC_y + y_movement * dt, z]
-                ),
-            ) + jnp.array([ICC_x, ICC_y, v_z * dt])
-            x_new, y_new, z_new = new_pos
-
-            yaw_new = normalize_angle(yaw + omega * dt)
-            return x_new, y_new, z_new, yaw_new, pitch, roll
-
-        x_new, y_new, z_new, yaw_new, pitch_new, roll_new = lax.cond(
-            jnp.isclose(v_right, v_left),
-            if_equal,
-            if_not_equal,
-            (x, y, z, yaw, v_left, v_right, 0, d, dt),
-        )
+        # Incorporate pitch and roll in horizontal velocities
+        x_new = x + v_xy * dt * jnp.sin(yaw)  # * jnp.cos(roll)
+        y_new = y + v_xy * dt * jnp.cos(yaw)  # * jnp.cos(roll)
+        z_new = z + v_z * dt
 
         return jnp.array(
             [
                 x_new,
                 y_new,
                 z_new,
-                yaw_new,
-                pitch_new,
-                roll_new,
+                yaw,
+                pitch,
+                roll,
             ]
         )
