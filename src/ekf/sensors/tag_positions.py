@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from functools import partial
 from urllib import request
 
@@ -84,7 +85,7 @@ class TagSensor(Sensor):
             )
 
         if DEBUG:
-            print("Tag", positions, uncertainties)
+            print("Tag", positions, uncertainties, datetime.now())
 
         return positions, uncertainties
 

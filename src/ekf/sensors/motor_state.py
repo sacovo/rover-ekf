@@ -1,5 +1,6 @@
 import socket
 import time
+from datetime import datetime
 from threading import Lock, Thread
 from typing import Sequence
 
@@ -86,7 +87,7 @@ class MotorControlStateTCP(MotorControlState):
             with self.state_lock:
                 self.state = to_left_and_right_speed(received)
                 if DEBUG:
-                    print("Motor", self.state)
+                    print("Motor", self.state, datetime.now())
 
     def get_current_state(self):
         with self.state_lock:

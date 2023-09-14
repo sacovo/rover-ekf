@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import partial
 
 import jax.numpy as jnp
@@ -106,7 +107,7 @@ class RotationSensor(Sensor):
         euler = target.as_euler("ZYX")
 
         if DEBUG:
-            print("Gyro", euler)
+            print("Gyro", euler, datetime.now())
 
         return OrientationMeasurement(jnp.array(euler), jnp.eye(3) * self.confidence)
 
