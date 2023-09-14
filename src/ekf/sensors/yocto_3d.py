@@ -7,6 +7,7 @@ from yoctopuce.yocto_api import YAPI, YRefParam
 from yoctopuce.yocto_gyro import YGyro
 from yoctopuce.yocto_tilt import YTilt
 
+from ekf.config import DEBUG
 from ekf.measurements import Measurement, OrientationMeasurement
 from ekf.sensors import Sensor
 
@@ -103,6 +104,9 @@ class RotationSensor(Sensor):
             * self.rot_sensor_inv
         )
         euler = target.as_euler("ZYX")
+
+        if DEBUG:
+            print("Gyro", euler)
 
         return OrientationMeasurement(jnp.array(euler), jnp.eye(3) * self.confidence)
 

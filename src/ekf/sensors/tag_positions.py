@@ -10,6 +10,7 @@ from jax import numpy as jnp
 from jax import vmap
 from jax.scipy.spatial.transform import Rotation
 
+from ekf.config import DEBUG
 from ekf.measurements import TagMeasurement
 from ekf.sensors.camera import CameraConfig
 from ekf.tag_calculations import (
@@ -81,6 +82,9 @@ class TagSensor(Sensor):
             uncertainties[tag_id] = (
                 tag_distances[tag_id] * self.confidence_factor + self.confidence_add
             )
+
+        if DEBUG:
+            print("Tag", positions, uncertainties)
 
         return positions, uncertainties
 

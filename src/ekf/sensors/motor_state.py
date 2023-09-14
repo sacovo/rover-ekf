@@ -3,6 +3,8 @@ import time
 from threading import Lock, Thread
 from typing import Sequence
 
+from ekf.config import DEBUG
+
 
 def chunker(seq: Sequence, size: int):
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
@@ -83,6 +85,8 @@ class MotorControlStateTCP(MotorControlState):
 
             with self.state_lock:
                 self.state = to_left_and_right_speed(received)
+                if DEBUG:
+                    print("Motor", self.state)
 
     def get_current_state(self):
         with self.state_lock:
