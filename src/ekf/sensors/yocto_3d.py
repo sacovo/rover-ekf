@@ -18,6 +18,7 @@ class RotationSensor(Sensor):
         initial_orientation: Rotation = Rotation.identity(),
         confidence=0.000001,
         angles="ZYX",
+        signs=[1, -1, -1],
         **kwargs
     ) -> None:
         self.initial_orientation = initial_orientation
@@ -27,19 +28,20 @@ class RotationSensor(Sensor):
         super().__init__(**kwargs)
         self.confidence = confidence
         self.angles = angles
+        self.signs = jnp.array(signs)
 
     def measure(self) -> Measurement:
         measurement = self._next_orientation()
 
         target = self.initial_orientation * self.rot_initial_inv * measurement
         z, y, x = target.as_euler(self.angles)
-        euler = [z, y, x]
+        euler = jnp.array([z, y, x]) * self.signs
 
         if DEBUG:
             print("Gyro [QUAT]", target.as_quat())
             print("Gyro [Euler]", euler)
 
-        return OrientationMeasurement(jnp.array(euler), jnp.eye(3) * self.confidence)
+        return OrientationMeasurement(euler, jnp.eye(3) * self.confidence)
 
     def _next_orientation(self):
         return Rotation.from_quat(self._get_quaternion())
