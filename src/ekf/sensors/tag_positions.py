@@ -25,7 +25,13 @@ class TagSensor(Sensor):
     name = "tags"
 
     def __init__(
-        self, camera_config: CameraConfig, tag_size, tag_positions, **kwargs
+        self,
+        camera_config: CameraConfig,
+        tag_size,
+        tag_positions,
+        confidence_factor=0.1,
+        confidence_add=0.1,
+        **kwargs
     ) -> None:
         super().__init__(
             timeout=kwargs.pop("timeout", None), name=kwargs.pop("name", self.name)
@@ -39,6 +45,8 @@ class TagSensor(Sensor):
         self.tag_size = tag_size
         self.tag_positions = tag_positions
         self.total_tags = len(tag_positions)
+        self.confidence_factor = confidence_factor
+        self.confidence_add = confidence_add
 
     def get_tag_positions(self, image, total_tags=10):
         result = self.detector.detect_tags(image)
@@ -70,7 +78,9 @@ class TagSensor(Sensor):
             # tags on top of the pole
             positions[tag_id] = np.max(centers, axis=0)
 
-            uncertainties[tag_id] = tag_distances[tag_id] / 10 + 0.1
+            uncertainties[tag_id] = (
+                tag_distances[tag_id] * self.confidence_factor + self.confidence_add
+            )
 
         return positions, uncertainties
 

@@ -29,7 +29,7 @@ class RoverModel:
                     [0, 0, 0, 1, 1, 1],
                 ],
             )
-            * 0.01
+            * 0.1
         )
         self.initial_state = jnp.zeros((dim,))
         self.P0 = jnp.zeros(((dim, dim)))
