@@ -53,9 +53,8 @@ class GyroLoader(RotationSensor):
             return self.quat
 
         self.timestamp = float(line[0])
-        x, y, z, w = [float(x) for x in line[1:]]
-        quaternion = jnp.array([w, x, y, z])
-        quaternion = quaternion / jnp.linalg.norm(quaternion)
+        x, z, y, w = [float(x) for x in line[1:]]
+        quaternion = jnp.array([x, y, z, w])
         self.quat = quaternion
         return quaternion
 
