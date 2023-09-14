@@ -35,6 +35,7 @@ class EKFTracker:
 
         for sensor in self.sensors:
             sensor.start()
+        self.motor_control.start()
 
     def subscribe(self, callback):
         self.callbacks.append(callback)

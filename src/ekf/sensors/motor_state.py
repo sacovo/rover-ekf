@@ -39,7 +39,7 @@ class MotorControlState:
 
 
 class MotorControlStateTCP(MotorControlState):
-    def __init__(self, host: str = "172.16.20.77", port: int = 3002) -> None:
+    def __init__(self, host: str = "172.16.10.77", port: int = 3002) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = port
@@ -70,6 +70,7 @@ class MotorControlStateTCP(MotorControlState):
         self.thread = None
 
     def _run(self):
+        self.connect()
         while not self.stopping:
             # Receive data from the server
             recv = self.socket.recv(15 * 4)
