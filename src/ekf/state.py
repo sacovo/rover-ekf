@@ -21,12 +21,12 @@ class RoverModel:
         self.Q = (
             jnp.array(
                 [
-                    [1, 1, 1, 0, 0, 0],
-                    [1, 1, 1, 0, 0, 0],
-                    [1, 1, 1, 0, 0, 0],
-                    [0, 0, 0, 1, 1, 1],
-                    [0, 0, 0, 1, 1, 1],
-                    [0, 0, 0, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 1],
                 ],
             )
             * 0.1
@@ -54,10 +54,8 @@ class RoverModel:
             y_new = y + v_xy * dt * jnp.cos(yaw) * jnp.cos(roll)
             z_new = z + v_z * dt
             yaw_new = yaw
-            pitch_new = pitch  # no change
-            roll_new = roll  # no change
 
-            return x_new, y_new, z_new, yaw_new, pitch_new, roll_new
+            return x_new, y_new, z_new, yaw_new, pitch, roll
 
         def if_not_equal(carry):
             x, y, z, yaw, v_left, v_right, _, d, dt = carry
@@ -93,9 +91,7 @@ class RoverModel:
             x_new, y_new, z_new = new_pos
 
             yaw_new = normalize_angle(yaw + omega * dt)
-            pitch_new = pitch  # no change
-            roll_new = roll  # no change
-            return x_new, y_new, z_new, yaw_new, pitch_new, roll_new
+            return x_new, y_new, z_new, yaw_new, pitch, roll
 
         x_new, y_new, z_new, yaw_new, pitch_new, roll_new = lax.cond(
             jnp.isclose(v_right, v_left),

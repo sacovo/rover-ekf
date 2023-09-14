@@ -33,7 +33,7 @@ class TagSensor(Sensor):
         tag_positions,
         confidence_factor=0.1,
         confidence_add=0.1,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(
             timeout=kwargs.pop("timeout", None), name=kwargs.pop("name", self.name)
@@ -54,13 +54,13 @@ class TagSensor(Sensor):
         result = self.detector.detect_tags(image)
         # Prepare output arrays
         positions = np.zeros((total_tags, 2))
-        uncertainties = np.full((total_tags, 2), 2.0)
+        uncertainties = np.full((total_tags, 2), 1e32)
 
         tag_centers = defaultdict(list)
         tag_distances = defaultdict(lambda: 1000.0)
 
         for tag in result:
-            if tag.distance > 7:
+            if tag.distance > 6:
                 continue
 
             if tag.tag_id >= total_tags:

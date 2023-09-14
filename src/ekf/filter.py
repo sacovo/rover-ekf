@@ -39,7 +39,10 @@ class ExtendedKalmanFilter:
 
         jnp.eye(S.shape[0])
         inv = jnp.linalg.inv(S)
-        assert not jnp.isnan(inv).any()
+
+        if jnp.isnan(inv).any():
+            print("Warning: Could not calculate K-matrix, skipping")
+            raise ValueError()
 
         K = self.covariance @ H_jacobian.T @ inv
 
