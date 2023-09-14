@@ -9,7 +9,7 @@ from ekf.state import RoverModel
 class Rover:
     def __init__(self, d) -> None:
         self.actor = RoverModel(d)
-        self.state = jnp.zeros((9,))
+        self.state = jnp.zeros((6,))
         self.P0 = (
             jnp.array(
                 [
