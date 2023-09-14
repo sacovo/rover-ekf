@@ -1,6 +1,6 @@
 import socket
 import time
-from threading import Thread
+from threading import Lock, Thread
 from typing import Sequence
 
 
@@ -46,6 +46,7 @@ class MotorControlStateTCP(MotorControlState):
         self.stopping: bool = False
 
         self.state = (0, 0)
+        self.state_lock = Lock()
 
     def connect(self):
         self.socket.connect((self.host, self.port))
@@ -78,7 +79,9 @@ class MotorControlStateTCP(MotorControlState):
             for chunk in chunked:
                 received.append(int.from_bytes(chunk, "big", signed=True))
 
-            self.state = to_left_and_right_speed(received)
+            with self.state_lock:
+                self.state = to_left_and_right_speed(received)
 
     def get_current_state(self):
-        return self.state
+        with self.state_lock:
+            return self.state

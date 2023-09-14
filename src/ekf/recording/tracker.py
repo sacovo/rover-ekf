@@ -26,7 +26,8 @@ class EKFTracker:
             print(f"Delta Time: {dt}")
             print(f"Motor speed: {motor} => Predicted State: \n{prediction}")
 
-            print(f"Sensor reading: \n{reading.data}")
+            print(f"Sensor reading:\n{reading.data}")
+            print(f"Sensor noise:\n{reading.R}")
             print(f"Sensor prediction: \n{sensor.H(prediction)}")
 
         self.filter.step(motor, dt, reading, sensor)

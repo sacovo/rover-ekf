@@ -7,7 +7,7 @@ from ekf.measurements import Measurement
 
 class Sensor:
     def __init__(
-        self, timeout: Optional[float] = None, name: Optional[str] = None
+        self, timeout: Optional[float] = 0.1, name: Optional[str] = None
     ) -> None:
         self.listeners: List[Callable[[Measurement, Sensor], None]] = []
         self.stopping = False

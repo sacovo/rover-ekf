@@ -90,7 +90,7 @@ class RotationSensor(Sensor):
         initial_measurement = self._next_orientation()
         self.rot_initial_inv = (initial_measurement * self.rot_sensor_inv).inv()
         super().__init__(**kwargs)
-        self.confidence = 0.0000001
+        self.confidence = 0.0001
 
     def measure(self) -> Measurement:
         measurement = self._next_orientation()
