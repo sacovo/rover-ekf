@@ -1,5 +1,5 @@
 from jax import numpy as jnp
-from scipy.spatial.transform import Rotation
+from jax.scipy.spatial.transform import Rotation
 
 
 class CameraConfig:
