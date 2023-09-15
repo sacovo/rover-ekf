@@ -37,11 +37,11 @@ class ExtendedKalmanFilter:
         self.S = S
         self.H = H_jacobian
 
-        jnp.eye(S.shape[0])
         inv = jnp.linalg.inv(S)
 
         if jnp.isnan(inv).any():
             print("Warning: Could not calculate K-matrix, skipping")
+            return
 
         K = self.covariance @ H_jacobian.T @ inv
 
