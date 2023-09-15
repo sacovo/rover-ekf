@@ -42,7 +42,6 @@ class ExtendedKalmanFilter:
 
         if jnp.isnan(inv).any():
             print("Warning: Could not calculate K-matrix, skipping")
-            raise ValueError()
 
         K = self.covariance @ H_jacobian.T @ inv
 

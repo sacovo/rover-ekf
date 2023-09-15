@@ -28,5 +28,5 @@ class CameraConfig:
 
         if isinstance(self.orientation, list):
             self.orientation = Rotation.from_euler(
-                "zyx", self.orientation, degrees=True
+                "ZYX", self.orientation, degrees=True
             )
