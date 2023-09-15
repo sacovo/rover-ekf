@@ -59,6 +59,7 @@ class EKFTracker:
         control = self.motor_control.get_current_state()
         now = time.time()
         dt = now - self.last
+        self.last = now
         self.queue.put((control, dt, measurement, sensor))
 
     def _filter_loop(self):
