@@ -45,7 +45,7 @@ class TagSensor(Sensor):
             n_jobs=1,
         )
         self.tag_size = tag_size
-        self.tag_positions = tag_positions
+        self.tag_positions = jnp.array(tag_positions)
         self.total_tags = len(tag_positions)
         self.confidence_factor = confidence_factor
         self.confidence_add = confidence_add
