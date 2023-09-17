@@ -28,6 +28,8 @@ def main(host: str, port: int):
 
 
 class MotorControlState:
+    verbose: bool = False
+
     def get_current_state(self):
         pass
 

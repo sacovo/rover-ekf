@@ -1,8 +1,12 @@
+import logging
+
 import jax.numpy as jnp
 from jax import jacfwd
 
 from ekf.measurements import Measurement
 from ekf.sensors import Sensor
+
+LOG = logging.getLogger(__name__)
 
 
 class ExtendedKalmanFilter:
@@ -40,8 +44,7 @@ class ExtendedKalmanFilter:
         inv = jnp.linalg.inv(S)
 
         if jnp.isnan(inv).any():
-            print("Warning: Could not calculate K-matrix, skipping")
-            return
+            LOG.warning("Warning: Could not calculate K-matrix, skipping")
 
         K = self.covariance @ H_jacobian.T @ inv
 

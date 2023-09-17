@@ -22,6 +22,6 @@ class FolderTagSensor(TagSensor):
         self.counter = 0
 
     def next_frame(self):
-        img = cv2.imread(self.images[self.counter])
+        img = cv2.imread(self.images[self.counter])  # type: ignore
         self.counter += 1
         return img

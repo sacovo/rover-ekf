@@ -14,6 +14,7 @@ class Sensor:
         self.timeout = timeout
         self.thread = None
         self.name = name
+        self.verbose = False
 
     def start(self):
         if self.thread is None:
@@ -41,7 +42,7 @@ class Sensor:
             if self.timeout:
                 time.sleep(self.timeout)
 
-    def measure(self) -> Measurement:
+    def measure(self) -> Optional[Measurement]:
         raise NotImplementedError("This needs to be implmeneted by a subclass!")
 
     def H(self, state):

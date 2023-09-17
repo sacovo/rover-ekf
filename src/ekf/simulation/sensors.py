@@ -5,7 +5,7 @@ from jax import jit
 from jax import numpy as jnp
 from jax import random
 
-from ekf.measurements import OrientationMeasurement, TagMeasurement
+from ekf.measurements import Measurement
 from ekf.sensors import Sensor
 from ekf.sensors.tag_positions import TagSensor
 from ekf.simulation.rover import Rover
@@ -48,7 +48,7 @@ class SimulatedTagSensor(TagSensor):
 
         self.key, subkey = random.split(self.key)
         data = (random.uniform(subkey, shape=(len(data),)) - 0.5) * 10.0
-        return TagMeasurement(data, jnp.eye(len(self.tag_positions) * 3) * 0.001)
+        return Measurement(data, jnp.eye(len(self.tag_positions) * 3) * 0.001)
 
 
 class SimulatedGyroSensor(Sensor):
@@ -66,7 +66,7 @@ class SimulatedGyroSensor(Sensor):
             + (random.uniform(subkey, shape=(3,)) - 0.5) * 0.001
         )
 
-        return OrientationMeasurement(data, jnp.eye(3) * 0.000001)
+        return Measurement(data, jnp.eye(3) * 0.000001)
 
     @partial(jit, static_argnums=0)
     def H(self, x):

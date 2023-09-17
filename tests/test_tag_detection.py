@@ -26,8 +26,8 @@ def test_tag_detection():
     response = request.urlopen(url)
     img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
 
-    img = cv2.imdecode(img_array, -1)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.imdecode(img_array, -1)  # type: ignore
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # type: ignore
 
     detector = Detector(families="tag16h5", quad_decimate=1)
 
@@ -38,9 +38,9 @@ def test_tag_detection():
     for detection in detections:
         corners = detection.corners.astype(np.int32)
         print(corners)
-        cv2.polylines(gray, [corners], True, (0, 255, 255))
+        cv2.polylines(gray, [corners], True, (0, 255, 255))  # type: ignore
         print(detection)
 
-    cv2.imshow("img", gray)
-    cv2.waitKey(0)
+    cv2.imshow("img", gray)  # type: ignore
+    cv2.waitKey(0)  # type: ignore
     assert False

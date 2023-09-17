@@ -7,7 +7,7 @@ from jax import jit
 from jax import numpy as jnp
 from jax import vmap
 
-from ekf.measurements import TagMeasurement
+from build.lib.ekf.measurements import Measurement
 
 from .sensor import Sensor
 from .tag_positions import CameraConfig
@@ -87,9 +87,11 @@ class ArucoTagSensor(Sensor):
     ) -> None:
         super().__init__(timeout=kwargs.pop("timeout", None), name=kwargs.pop("name"))
 
-        dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
-        parameters = cv2.aruco.DetectorParameters()
-        self.detector = cv2.aruco.ArucoDetector(dictionary, parameters)
+        dictionary = cv2.aruco.getPredefinedDictionary(  # type: ignore
+            cv2.aruco.DICT_ARUCO_ORIGINAL,  # type: ignore
+        )
+        parameters = cv2.aruco.DetectorParameters()  # type: ignore
+        self.detector = cv2.aruco.ArucoDetector(dictionary, parameters)  # type: ignore
 
         self.url = camera_config.url
         self.camera_parameters = camera_config
@@ -106,10 +108,10 @@ class ArucoTagSensor(Sensor):
         if ids is None:
             return positions, uncertainties
 
-        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(  # type: ignore
             corners,
             0.05,
-            self.camera_parameters.camera_matrix,
+            self.camera_parameters.calibration,
             self.camera_parameters.distortion,
         )
 
@@ -136,14 +138,14 @@ class ArucoTagSensor(Sensor):
     def measure(self):
         response = request.urlopen(self.url)
         img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
-        img = cv2.imdecode(img_array, -1)
-        cv2.imshow("", img)
-        cv2.waitKey(0)
+        img = cv2.imdecode(img_array, -1)  # type: ignore
+        cv2.imshow("", img)  # type: ignore
+        cv2.waitKey(0)  # type: ignore
 
         # R: für alle gleich
         positions, uncertainties = self.get_tag_positions(img)
 
-        return TagMeasurement(
+        return Measurement(
             data=positions.flatten(),
             R=uncertainties,
         )

@@ -16,7 +16,7 @@ calibration = os.path.join(source_dir, "calibration.pkl")
 def test_load_image():
     response = request.urlopen(url)
     img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
-    img = cv2.imdecode(img_array, -1)
+    img = cv2.imdecode(img_array, -1)  # type: ignore
 
     assert img.shape
 
@@ -34,5 +34,6 @@ def test_with_calibration():
 
     result = sensor.measure()
 
+    assert result is not None
     print(result.data)
     assert len(result.data) == 3

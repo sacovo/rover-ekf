@@ -93,7 +93,7 @@ class CameraLoader:
         if self.idx >= len(self.images):
             return
         img_path = self.images[self.idx]
-        img = cv2.imread(os.path.join(self.path, img_path))
+        img = cv2.imread(os.path.join(self.path, img_path))  # type: ignore
         reading = self.sensor.get_reading(img)
 
         self.value = reading

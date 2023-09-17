@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 from functools import partial
+from typing import Optional
 from urllib import request
 
 import cv2
@@ -12,7 +13,7 @@ from jax import vmap
 from jax.scipy.spatial.transform import Rotation
 
 from ekf.config import DEBUG
-from ekf.measurements import TagMeasurement
+from ekf.measurements import Measurement
 from ekf.sensors.camera import CameraConfig
 from ekf.tag_calculations import (
     apply_distortion,
@@ -92,7 +93,7 @@ class TagSensor(Sensor):
     def next_frame(self):
         response = request.urlopen(self.url)
         img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
-        img = cv2.imdecode(img_array, -1)
+        img = cv2.imdecode(img_array, -1)  # type: ignore
 
         return img
 
@@ -111,12 +112,12 @@ class TagSensor(Sensor):
 
         return distorted_position
 
-    def get_reading(self, img):
+    def get_reading(self, img) -> Optional[Measurement]:
         positions, uncertainties = self.get_tag_positions(img, self.total_tags)
         if positions is None or uncertainties is None:
             return None
 
-        return TagMeasurement(
+        return Measurement(
             data=positions.flatten(),
             R=jnp.diagflat(uncertainties.flatten()),
         )
@@ -125,7 +126,12 @@ class TagSensor(Sensor):
         img = self.next_frame()
 
         # R: für alle gleich
-        return self.get_reading(img)
+        measurement = self.get_reading(img)
+
+        if measurement is not None and self.verbose:
+            measurement.meta = img
+
+        return measurement
 
     @partial(jit, static_argnums=0)
     def H(self, state):

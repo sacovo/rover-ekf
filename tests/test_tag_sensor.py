@@ -37,6 +37,8 @@ def test_euler_vmap():
             TagSensor.calculate_tag_position,
             camera_position=camera_position,
             camera_orientation=camera_orientation,
+            calibration=None,
+            distortion=None,
         )
     )(tag_positions)
 
@@ -46,7 +48,7 @@ def test_H_call():
     camera = CameraConfig()
     sensor = TagSensor(
         url="",
-        camera_parameters=camera,
+        camera_config=camera,
         tag_positions=jnp.array([[23, 10, 12], [12, 5, 6]]),
         tag_size=1,
     )
@@ -66,7 +68,7 @@ def test_H_moved():
     rover.state = rover.state.at[0].set(23).at[1].set(10).at[2].set(12)
     sensor = TagSensor(
         url="",
-        camera_parameters=camera,
+        camera_config=camera,
         tag_positions=jnp.array([[23, 10, 12], [12, 5, 6]]),
         tag_size=1,
     )
@@ -85,6 +87,8 @@ def test_tag_position():
         tag_position,
         jnp.zeros(3),
         jnp.array((math.pi / 2, 0, 0)),
+        None,
+        None,
     )
 
     testing.assert_allclose(relative_position, [0, 1, 0], atol=5e-6)
@@ -93,6 +97,8 @@ def test_tag_position():
         tag_position,
         jnp.zeros(3),
         jnp.zeros(3),
+        None,
+        None,
     )
 
     testing.assert_allclose(tag_position, relative_position)
@@ -105,7 +111,7 @@ def test_H_call_rotated():
     camera = CameraConfig()
     sensor = TagSensor(
         url="",
-        camera_parameters=camera,
+        camera_config=camera,
         tag_positions=jnp.array([[1, 0, 0]]),
         tag_size=1,
     )

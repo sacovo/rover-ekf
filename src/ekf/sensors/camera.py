@@ -24,9 +24,11 @@ class CameraConfig:
             self.distortion = None
 
         self.position = jnp.array(kwargs.pop("position"))
-        self.orientation: Rotation = kwargs.pop("orientation")
+        orientation: Rotation | list[float] = kwargs.pop("orientation")
 
-        if isinstance(self.orientation, list):
+        if isinstance(orientation, list):
             self.orientation = Rotation.from_euler(
-                "ZYX", self.orientation, degrees=True
+                "ZYX", jnp.array(orientation), degrees=True
             )
+        else:
+            self.orientation = orientation

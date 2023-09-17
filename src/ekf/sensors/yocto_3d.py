@@ -8,7 +8,7 @@ from yoctopuce.yocto_gyro import YGyro
 from yoctopuce.yocto_tilt import YTilt
 
 from ekf.config import DEBUG
-from ekf.measurements import Measurement, OrientationMeasurement
+from ekf.measurements import Measurement
 from ekf.sensors import Sensor
 
 
@@ -31,9 +31,9 @@ class RotationSensor(Sensor):
         self.signs = jnp.array(signs)
 
     def measure(self) -> Measurement:
-        measurement = self._next_orientation()
+        orientation = self._next_orientation()
 
-        target = self.initial_orientation * self.rot_initial_inv * measurement
+        target = self.initial_orientation * self.rot_initial_inv * orientation
         z, y, x = target.as_euler(self.angles)
         euler = jnp.array([z, y, x]) * self.signs
 
@@ -41,7 +41,12 @@ class RotationSensor(Sensor):
             print("Gyro [QUAT]", target.as_quat())
             print("Gyro [Euler]", euler)
 
-        return OrientationMeasurement(euler, jnp.eye(3) * self.confidence)
+        measurement = Measurement(euler, jnp.eye(3) * self.confidence)
+
+        if self.verbose:
+            measurement.meta = orientation
+
+        return measurement
 
     def _next_orientation(self):
         return Rotation.from_quat(self._get_quaternion())

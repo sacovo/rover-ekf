@@ -1,7 +1,11 @@
+import pickle
 import queue
 import time
+from datetime import datetime
 from threading import Thread
-from typing import List
+from typing import List, Optional
+
+from cv2 import os
 
 from ekf.filter import ExtendedKalmanFilter
 from ekf.sensors import Sensor
@@ -14,6 +18,8 @@ class EKFTracker:
         sensors: List[Sensor],
         filter: ExtendedKalmanFilter,
         motor_control: MotorControlState,
+        output_path: Optional[str],
+        verbose: bool = False,
     ) -> None:
         self.sensors = sensors
         self.filter = filter
@@ -27,14 +33,28 @@ class EKFTracker:
         self._listeners_setup = False
         self.set_state = None
 
+        self.verbose = verbose
+
+        self.recording = False
+
+        if output_path is not None:
+            self.output_path = os.path.join(
+                output_path, datetime.now().strftime("%Y-%d-%mT%H:%I") + ".pkl"
+            )
+            self.output = open(self.output_path, "wb")
+            self.recording = True
+
     def _setup_listeners(self):
         if not self._listeners_setup:
             for sensor in self.sensors:
+                sensor.verbose = self.verbose
                 sensor.subscribe(self._sensor_callback)
             self._listeners_setup = True
 
         for sensor in self.sensors:
             sensor.start()
+
+        self.motor_control.verbose = self.verbose
         self.motor_control.start()
 
     def subscribe(self, callback):
@@ -62,6 +82,9 @@ class EKFTracker:
         self.last = now
         self.queue.put((control, dt, measurement, sensor))
 
+    def store_reading(self, reading):
+        pickle.dump(reading, self.output)
+
     def _filter_loop(self):
         while not self.stopping:
             if self.set_state is not None:
@@ -73,6 +96,8 @@ class EKFTracker:
                 control, dt, measurement, sensor = self.queue.get(timeout=0.1)
                 self.filter.step(control, dt, measurement, sensor)
                 self.call_callbacks(self.filter.state)
+                if self.recording:
+                    self.store_reading((control, dt, measurement, sensor))
             except queue.Empty:
                 continue
 

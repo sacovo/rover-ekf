@@ -38,6 +38,7 @@ def measure_kalman(iterations: int = 1000, sensor_kind: SENSORS = "gyro"):
     if sensor_kind == "gyro":
         sensor = SimulatedGyroSensor(rover=rover)
     elif sensor_kind == "tag":
+        raise NotImplementedError()
         sensor = SimulatedTagSensor(rover=rover)
     else:
         raise ValueError(f"Invalid sensor kind provided: {sensor_kind}")
