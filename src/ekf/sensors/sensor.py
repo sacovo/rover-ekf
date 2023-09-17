@@ -16,6 +16,12 @@ class Sensor:
         self.name = name
         self.verbose = False
 
+        self.config = {
+            "timeout": self.timeout,
+            "name": self.name,
+            "verbose": self.verbose,
+        }
+
     def start(self):
         if self.thread is None:
             self.thread = Thread(target=self._run, daemon=True)

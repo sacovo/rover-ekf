@@ -3,11 +3,13 @@ import queue
 import time
 from datetime import datetime
 from threading import Thread
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from cv2 import os
+from jax import Array
 
 from ekf.filter import ExtendedKalmanFilter
+from ekf.measurements import Measurement
 from ekf.sensors import Sensor
 from ekf.sensors.motor_state import MotorControlState
 
@@ -26,7 +28,9 @@ class EKFTracker:
         self.initial_covariance = filter.covariance.copy()
         self.motor_control = motor_control
         self.last = time.time()
-        self.queue = queue.Queue()
+        self.queue: queue.Queue[
+            Tuple[Array, float, Measurement, Sensor]
+        ] = queue.Queue()
 
         self.stopping = False
         self.callbacks = []
@@ -75,7 +79,7 @@ class EKFTracker:
         self.thread.join()
         self.stopping = False
 
-    def _sensor_callback(self, measurement, sensor):
+    def _sensor_callback(self, measurement: Measurement, sensor: Sensor):
         control = self.motor_control.get_current_state()
         now = time.time()
         dt = now - self.last
@@ -97,7 +101,7 @@ class EKFTracker:
                 self.filter.step(control, dt, measurement, sensor)
                 self.call_callbacks(self.filter.state)
                 if self.recording:
-                    self.store_reading((control, dt, measurement, sensor))
+                    self.store_reading((control, dt, measurement, sensor.config))
             except queue.Empty:
                 continue
 

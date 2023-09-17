@@ -29,6 +29,15 @@ class RotationSensor(Sensor):
         self.confidence = confidence
         self.angles = angles
         self.signs = jnp.array(signs)
+        self.config.update(
+            {
+                "signs": self.signs,
+                "angles": self.angles,
+                "confidence": self.confidence,
+                "initial_orientation": initial_orientation,
+                "initial_measurement": initial_measurement,
+            }
+        )
 
     def measure(self) -> Measurement:
         orientation = self._next_orientation()

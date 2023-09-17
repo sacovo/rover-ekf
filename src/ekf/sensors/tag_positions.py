@@ -50,6 +50,17 @@ class TagSensor(Sensor):
         self.total_tags = len(tag_positions)
         self.confidence_factor = confidence_factor
         self.confidence_add = confidence_add
+        self.config.update(
+            {
+                "url": self.url,
+                "camera": self.camera,
+                "tag_size": tag_size,
+                "tag_positions": self.tag_positions,
+                "total_tags": self.total_tags,
+                "confidence_factor": self.confidence_factor,
+                "confidence_add": self.confidence_add,
+            }
+        )
 
     def get_tag_positions(self, image, total_tags=10):
         result = self.detector.detect_tags(image)

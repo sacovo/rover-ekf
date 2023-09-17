@@ -3,6 +3,8 @@ import time
 from threading import Lock, Thread
 from typing import Sequence
 
+from jax import Array
+
 
 def chunker(seq: Sequence, size: int):
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
@@ -30,8 +32,8 @@ def main(host: str, port: int):
 class MotorControlState:
     verbose: bool = False
 
-    def get_current_state(self):
-        pass
+    def get_current_state(self) -> Array:
+        raise NotImplementedError()
 
     def start(self):
         pass
